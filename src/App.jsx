@@ -253,9 +253,12 @@ Respond ONLY with a JSON array of 4 objects, no markdown, no explanation. Each o
 - "emoji": one emoji
 - "where": best store — choose from: Amazon, Etsy, Target, Walmart, Nordstrom, Uncommon Goods, Bookshop
 - "searchQuery": 3-5 word search query to find this exact product`;
-      const res = await fetch("https://api.anthropic.com/v1/messages",{
-        method:"POST",headers:{"Content-Type":"application/json","x-api-key":import.meta.env.VITE_ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-        body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1200,messages:[{role:"user",content:prompt}]})
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? "http://localhost:3001/api/gifts"
+        : "/api/gifts"
+      const res = await fetch(apiUrl,{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1200,messages:[{role:"user",content:prompt}]})
       });
       const data = await res.json();
       const text = data.content.map(b=>b.text||"").join("");
