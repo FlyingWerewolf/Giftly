@@ -148,6 +148,10 @@ export default function GiftApp() {
   const [contactLoading, setContactLoading] = useState(false);
   const [calExported, setCalExported] = useState(null);
 
+  // Edit friend
+  const [editFriendId, setEditFriendId] = useState(null);
+  const [editFriendData, setEditFriendData] = useState({name:"",bio:""});
+
   // Affiliate
   const [affIds, setAffIds]       = useState({amazon:"",etsy:"",target:""});
   const [affSaved, setAffSaved]   = useState(false);
@@ -201,6 +205,32 @@ export default function GiftApp() {
     }]);
     setNewFriend({name:"",bio:""});
     setShowAddFriend(false);
+  }
+
+  function startEditFriend(f, e) {
+    e.stopPropagation();
+    setEditFriendId(f.id);
+    setEditFriendData({name:f.name, bio:f.bio||""});
+  }
+
+  function saveEditFriend() {
+    if (!editFriendData.name.trim()) return;
+    setFriends(prev => prev.map(f => f.id===editFriendId ? {
+      ...f,
+      name: editFriendData.name.trim(),
+      bio:  editFriendData.bio.trim(),
+      initials: initials(editFriendData.name.trim()),
+      ...randomAvatar(editFriendData.name.trim()),
+    } : f));
+    if (selectedFriend?.id===editFriendId) setSelectedFriend(null);
+    setEditFriendId(null);
+  }
+
+  function deleteFriend(id, e) {
+    e.stopPropagation();
+    setFriends(prev => prev.filter(f=>f.id!==id));
+    if (selectedFriend?.id===id) setSelectedFriend(null);
+    if (editFriendId===id) setEditFriendId(null);
   }
 
   function toggleInterest(i) {
@@ -399,13 +429,30 @@ Respond ONLY with a JSON array of 4 objects, no markdown, no explanation. Each o
                   )}
 
                   {friends.map(f=>(
-                    <div key={f.id} style={S.friendRow(selectedFriend?.id===f.id)} onClick={()=>setSelectedFriend(f)}>
-                      <div style={S.av(f.color,f.textColor)}>{f.initials||initials(f.name)}</div>
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:15,fontWeight:600,color:selectedFriend?.id===f.id?"#FAF8F3":"#1A1A1A",fontFamily:"sans-serif"}}>{f.name}</div>
-                        {f.bio && <div style={{fontSize:12,color:selectedFriend?.id===f.id?"#AAA":"#999",fontFamily:"sans-serif"}}>{f.bio}</div>}
+                    <div key={f.id}>
+                      <div style={S.friendRow(selectedFriend?.id===f.id)} onClick={()=>setSelectedFriend(f)}>
+                        <div style={S.av(f.color,f.textColor)}>{f.initials||initials(f.name)}</div>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:15,fontWeight:600,color:selectedFriend?.id===f.id?"#FAF8F3":"#1A1A1A",fontFamily:"sans-serif"}}>{f.name}</div>
+                          {f.bio && <div style={{fontSize:12,color:selectedFriend?.id===f.id?"#AAA":"#999",fontFamily:"sans-serif"}}>{f.bio}</div>}
+                        </div>
+                        <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                          {selectedFriend?.id===f.id && <span style={{color:"#FAF8F3",fontSize:14}}>✓</span>}
+                          <button onClick={e=>startEditFriend(f,e)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:selectedFriend?.id===f.id?"#AAA":"#999",padding:"2px 4px",fontFamily:"sans-serif"}}>✏️</button>
+                          <button onClick={e=>deleteFriend(f.id,e)} style={{background:"none",border:"none",cursor:"pointer",fontSize:13,color:selectedFriend?.id===f.id?"#AAA":"#CCC",padding:"2px 4px"}}>×</button>
+                        </div>
                       </div>
-                      {selectedFriend?.id===f.id && <span style={{color:"#FAF8F3"}}>✓</span>}
+                      {/* Inline edit form */}
+                      {editFriendId===f.id && (
+                        <div style={{background:"#FFF",borderRadius:14,border:"1.5px solid #DEDAD2",padding:12,marginTop:-4,marginBottom:8}}>
+                          <input style={{...S.inp,marginBottom:8}} placeholder="Full name" value={editFriendData.name} onChange={e=>setEditFriendData(d=>({...d,name:e.target.value}))} />
+                          <input style={{...S.inp,marginBottom:10}} placeholder="Short bio e.g. 30 • Loves coffee" value={editFriendData.bio} onChange={e=>setEditFriendData(d=>({...d,bio:e.target.value}))} />
+                          <div style={{display:"flex",gap:8}}>
+                            <button onClick={()=>setEditFriendId(null)} style={{flex:1,padding:"8px",borderRadius:12,border:"1.5px solid #DEDAD2",background:"#FFF",fontSize:13,fontFamily:"sans-serif",cursor:"pointer",color:"#555"}}>Cancel</button>
+                            <button onClick={saveEditFriend} style={{flex:1,padding:"8px",borderRadius:12,border:"none",background:"#1A1A1A",color:"#FFF",fontSize:13,fontFamily:"sans-serif",cursor:"pointer",fontWeight:600}}>Save</button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
 
